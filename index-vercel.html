@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>For Laxmipriya ✨</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-1: #1a0b2e;
+    --bg-2: #2d1b4e;
+    --bg-3: #4a1942;
+    --rose: #ff6b9d;
+    --gold: #ffd6a5;
+    --cream: #fff1e6;
+    --lav: #c8a8e9;
+    --glass: rgba(255, 255, 255, 0.08);
+    --glass-strong: rgba(255, 255, 255, 0.14);
+    --border: rgba(255, 255, 255, 0.18);
+    --shadow: 0 25px 60px -15px rgba(0,0,0,.55);
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--cream);
+    background: radial-gradient(ellipse at top, var(--bg-2) 0%, var(--bg-1) 50%, #0a0418 100%);
+    overflow: hidden;
+  }
+
+  /* 3D canvas behind everything */
+  #bg3d {
+    position: fixed; inset: 0; z-index: 0;
+    pointer-events: none;
+  }
+
+  /* Aurora glow blobs */
+  .aurora {
+    position: fixed; z-index: 1; pointer-events: none;
+    filter: blur(80px); opacity: .55;
+    border-radius: 50%;
+  }
+  .aurora.a {
+    width: 520px; height: 520px;
+    background: radial-gradient(circle, var(--rose), transparent 70%);
+    top: -180px; left: -120px;
+    animation: drift 18s ease-in-out infinite alternate;
+  }
+  .aurora.b {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, var(--lav), transparent 70%);
+    bottom: -200px; right: -160px;
+    animation: drift 22s ease-in-out infinite alternate-reverse;
+  }
+  .aurora.c {
+    width: 380px; height: 380px;
+    background: radial-gradient(circle, var(--gold), transparent 70%);
+    top: 40%; left: 50%; transform: translate(-50%, -50%);
+    opacity: .25;
+    animation: drift 26s ease-in-out infinite;
+  }
+  @keyframes drift {
+    0%   { transform: translate(0,0) scale(1); }
+    100% { transform: translate(60px,40px) scale(1.15); }
+  }
+
+  /* Stage system */
+  .screen {
+    position: fixed; inset: 0; z-index: 10;
+    display: flex; justify-content: center; align-items: center;
+    padding: 20px;
+    transition: opacity .8s ease, transform .8s cubic-bezier(.22,1,.36,1);
+    overflow-y: auto;
+  }
+  .screen.hidden {
+    opacity: 0; transform: translateY(40px) scale(.98);
+    pointer-events: none;
+  }
+
+  /* Glass card */
+  .card {
+    background: var(--glass);
+    backdrop-filter: blur(22px) saturate(140%);
+    -webkit-backdrop-filter: blur(22px) saturate(140%);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 2.6rem 2.4rem;
+    width: 100%;
+    max-width: 560px;
+    box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.15);
+    text-align: center;
+    transform-style: preserve-3d;
+    transition: transform .3s ease;
+    position: relative;
+  }
+  .card::before {
+    content: ''; position: absolute; inset: 0;
+    border-radius: 28px;
+    background: linear-gradient(135deg, rgba(255,107,157,.15), transparent 50%, rgba(200,168,233,.12));
+    pointer-events: none;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    margin: 0 0 .6rem;
+    background: linear-gradient(135deg, var(--cream), var(--gold), var(--rose));
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
+    letter-spacing: .3px;
+  }
+  .script {
+    font-family: 'Caveat', cursive;
+    font-size: 1.4rem;
+    color: var(--gold);
+    margin-bottom: .8rem;
+  }
+  p { color: rgba(255,241,230,.78); line-height: 1.7; margin: 0 0 1.6rem; font-size: .98rem; }
+  b { color: var(--cream); font-weight: 600; }
+
+  /* 3D star icon */
+  .icon-3d {
+    width: 96px; height: 96px;
+    margin: 0 auto 1.4rem;
+    position: relative;
+    transform-style: preserve-3d;
+    animation: twinkle 4s linear infinite;
+  }
+  .icon-3d svg { width: 100%; height: 100%; filter: drop-shadow(0 8px 24px rgba(255,214,165,.55)); }
+  @keyframes twinkle {
+    0%   { transform: rotate(0deg) scale(1); }
+    25%  { transform: rotate(90deg) scale(1.08); }
+    50%  { transform: rotate(180deg) scale(.96); }
+    75%  { transform: rotate(270deg) scale(1.06); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+
+  /* Buttons */
+  .btn-row {
+    display: flex; justify-content: center; gap: 16px;
+    flex-wrap: wrap; position: relative; min-height: 56px;
+  }
+  .btn {
+    padding: 13px 32px;
+    border-radius: 14px;
+    border: none;
+    font-weight: 600;
+    font-family: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform .2s ease, box-shadow .2s ease, background .2s;
+    letter-spacing: .3px;
+    position: relative; overflow: hidden;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--rose), #ff8db1);
+    color: white;
+    box-shadow: 0 10px 30px -10px rgba(255,107,157,.7), inset 0 1px 0 rgba(255,255,255,.3);
+  }
+  .btn-primary:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 18px 40px -10px rgba(255,107,157,.8); }
+  .btn-primary:active { transform: translateY(0) scale(.98); }
+  .btn-ghost {
+    background: rgba(255,255,255,.06);
+    color: var(--cream);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,.12); }
+  .btn-no {
+    background: linear-gradient(135deg, var(--rose), #ff8db1);
+    color: white;
+    box-shadow: 0 10px 30px -10px rgba(255,107,157,.7), inset 0 1px 0 rgba(255,255,255,.3);
+    transition: left .28s cubic-bezier(.22,1,.36,1), top .28s cubic-bezier(.22,1,.36,1), transform .15s ease;
+  }
+
+  /* Typing text */
+  .letter {
+    text-align: left;
+    font-family: 'Caveat', cursive;
+    font-size: 1.35rem;
+    line-height: 1.7;
+    color: var(--cream);
+    min-height: 240px;
+    padding: 1.2rem 1.4rem;
+    background: rgba(255, 248, 230, .04);
+    border-radius: 18px;
+    border: 1px dashed rgba(255,214,165,.25);
+    margin-bottom: 1.6rem;
+    white-space: pre-wrap;
+  }
+  .letter::after {
+    content: '|'; color: var(--gold); animation: blink 1s step-end infinite;
+  }
+  .letter.done::after { display: none; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* Polaroid memory cards */
+  .memory-stage { flex-direction: column; }
+  .memory-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    text-align: center;
+    margin: 0 0 .3rem;
+    background: linear-gradient(135deg, var(--cream), var(--gold));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .memory-sub {
+    font-family: 'Caveat', cursive;
+    font-size: 1.3rem;
+    color: var(--lav);
+    text-align: center;
+    margin-bottom: 1.8rem;
+  }
+  .polaroids {
+    display: flex; gap: 18px; flex-wrap: wrap;
+    justify-content: center; max-width: 900px;
+    perspective: 1200px;
+  }
+  .polaroid {
+    background: #f8f1e3;
+    padding: 14px 14px 38px;
+    border-radius: 4px;
+    width: 200px;
+    box-shadow: 0 18px 40px -10px rgba(0,0,0,.55), 0 4px 10px rgba(0,0,0,.3);
+    color: #2d1b1b;
+    text-align: center;
+    transform-style: preserve-3d;
+    transition: transform .4s cubic-bezier(.22,1,.36,1);
+    cursor: default;
+  }
+  .polaroid:nth-child(1) { transform: rotate(-7deg) translateY(0); }
+  .polaroid:nth-child(2) { transform: rotate(4deg) translateY(-12px); }
+  .polaroid:nth-child(3) { transform: rotate(-3deg) translateY(8px); }
+  .polaroid:nth-child(4) { transform: rotate(6deg) translateY(-4px); }
+  .polaroid:hover {
+    transform: rotate(0deg) translateY(-14px) scale(1.06) !important;
+    z-index: 5;
+    box-shadow: 0 30px 60px -10px rgba(0,0,0,.7);
+  }
+  .polaroid .pic {
+    width: 100%; aspect-ratio: 1/1;
+    border-radius: 2px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 56px;
+    margin-bottom: 10px;
+  }
+  .polaroid .cap {
+    font-family: 'Caveat', cursive;
+    font-size: 1.25rem;
+    line-height: 1.1;
+  }
+  .polaroid .pic.p1 { background: linear-gradient(135deg, #ffb4a2, #ffcdb2); }
+  .polaroid .pic.p2 { background: linear-gradient(135deg, #c8a8e9, #b5d3f0); }
+  .polaroid .pic.p3 { background: linear-gradient(135deg, #ffd6a5, #ffb4a2); }
+  .polaroid .pic.p4 { background: linear-gradient(135deg, #b8e0d2, #d6eadf); }
+
+  /* Final celebration */
+  .final-card { text-align: center; }
+  .final-emoji {
+    font-size: 80px;
+    display: inline-block;
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%,100% { transform: translateY(0) rotate(0); }
+    50%     { transform: translateY(-12px) rotate(6deg); }
+  }
+
+  /* Confetti */
+  .confetti {
+    position: fixed; top: -20px; width: 10px; height: 14px;
+    z-index: 50; pointer-events: none;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Footer signature */
+  .sig {
+    font-family: 'Caveat', cursive;
+    color: var(--gold);
+    font-size: 1.15rem;
+    margin-top: 1rem;
+    opacity: .85;
+  }
+
+  /* Hello Kitty popup */
+  .popup-overlay {
+    position: fixed; inset: 0;
+    background: rgba(26, 11, 46, .55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 99999;
+    opacity: 0; pointer-events: none;
+    transition: opacity .35s ease;
+    padding: 20px;
+  }
+  .popup-overlay.show { opacity: 1; pointer-events: auto; }
+  .popup-card {
+    background: linear-gradient(135deg, #ffe4ec, #fff0f5);
+    color: #6b1f5e;
+    padding: 2.2rem 2.4rem 2rem;
+    border-radius: 28px;
+    box-shadow: 0 28px 60px -10px rgba(0,0,0,.55), inset 0 2px 0 rgba(255,255,255,.7);
+    border: 2px solid white;
+    text-align: center;
+    max-width: 380px; width: 100%;
+    transform: scale(.7) translateY(30px);
+    transition: transform .45s cubic-bezier(.22,1,.36,1);
+    position: relative;
+  }
+  .popup-overlay.show .popup-card { transform: scale(1) translateY(0); }
+  .popup-bow {
+    font-size: 52px; line-height: 1;
+    margin-bottom: .4rem;
+    display: inline-block;
+    animation: bowWiggle 1.4s ease-in-out infinite;
+  }
+  @keyframes bowWiggle {
+    0%,100% { transform: rotate(-9deg); }
+    50%     { transform: rotate(9deg); }
+  }
+  .popup-text {
+    font-family: 'Caveat', cursive;
+    font-size: 1.75rem;
+    line-height: 1.25;
+    margin: .2rem 0 1.4rem;
+    font-weight: 600;
+  }
+  .popup-btn {
+    background: linear-gradient(135deg, #ff6b9d, #ff8db1);
+    color: white; border: none;
+    padding: 11px 28px;
+    border-radius: 14px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600; font-size: .95rem;
+    cursor: pointer;
+    box-shadow: 0 8px 20px -6px rgba(255,107,157,.6);
+    transition: transform .15s ease, box-shadow .2s ease;
+  }
+  .popup-btn:hover { transform: translateY(-2px) scale(1.04); box-shadow: 0 14px 28px -6px rgba(255,107,157,.7); }
+
+  /* Scrollbar hide */
+  ::-webkit-scrollbar { width: 0; height: 0; }
+
+  @media (max-width: 600px) {
+    .card { padding: 2rem 1.4rem; }
+    .polaroid { width: 150px; }
+    .polaroid .pic { font-size: 40px; }
+    .letter { font-size: 1.15rem; min-height: 280px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg3d"></canvas>
+<div class="aurora a"></div>
+<div class="aurora b"></div>
+<div class="aurora c"></div>
+
+<!-- STAGE 1: Gatekeeper -->
+<div id="stage1" class="screen">
+  <div class="card" data-tilt>
+    <div class="icon-3d">
+      <svg viewBox="0 0 100 100">
+        <defs>
+          <linearGradient id="sg1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#fff1d6"/>
+            <stop offset="45%" stop-color="#ffd6a5"/>
+            <stop offset="100%" stop-color="#ffb46b"/>
+          </linearGradient>
+        </defs>
+        <path fill="url(#sg1)" d="M50,5 L61.8,38.2 L96,38.2 L68.1,58.8 L78.9,92 L50,71.4 L21.1,92 L31.9,58.8 L4,38.2 L38.2,38.2 Z"/>
+      </svg>
+    </div>
+    <div class="script">a little something for...</div>
+    <h1>Kanumuri Laxmipriya</h1>
+    <p>Hey 🌸 — this page was made for one person, and one person only. Before you go in, just a tiny check.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="goNext(1, 2)">Yes, that's me ✨</button>
+    </div>
+    <div class="sig">— made just for you</div>
+  </div>
+</div>
+
+<!-- STAGE 2: Memory lane -->
+<div id="stage2" class="screen hidden memory-stage">
+  <div style="max-width: 920px; width: 100%;">
+    <h2 class="memory-title">7 months of you & me</h2>
+    <div class="memory-sub">a few moments I'll never forget...</div>
+    <div class="polaroids">
+      <div class="polaroid"><div class="pic p1">☕</div><div class="cap">our endless<br>conversations</div></div>
+      <div class="polaroid"><div class="pic p2">⚡</div><div class="cap">all our fights —<br>still besties</div></div>
+      <div class="polaroid"><div class="pic p3">😂</div><div class="cap">inside jokes<br>only we get</div></div>
+      <div class="polaroid"><div class="pic p4">🤫</div><div class="cap">secrets only<br>we two share</div></div>
+    </div>
+    <div style="text-align:center; margin-top: 2.4rem;">
+      <button class="btn btn-primary" onclick="goNext(2, 3)">I have something to say →</button>
+    </div>
+  </div>
+</div>
+
+<!-- STAGE 3: The apology letter -->
+<div id="stage3" class="screen hidden">
+  <div class="card" data-tilt>
+    <div class="script">an open letter to my best friend</div>
+    <h1>I'm sorry, Priya.</h1>
+    <div id="letter" class="letter"></div>
+    <div id="afterLetter" style="display:none;">
+      <h2 style="font-family:'Playfair Display',serif;font-size:1.5rem;margin:.4rem 0 1.2rem;color:var(--cream);">So... do you forgive me?</h2>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="goNext(3, 4)">Yes, I forgive you ✨</button>
+        <button id="noBtn1" class="btn btn-no" onclick="showTryAgain()">No</button>
+      </div>
+    </div>
+    <button id="readBtn" class="btn btn-primary" onclick="typeLetter()">Open the letter ✉️</button>
+  </div>
+</div>
+
+<!-- STAGE 4: Forgiveness -->
+<div id="stage4" class="screen hidden">
+  <div class="card final-card" data-tilt>
+    <div class="final-emoji">🌷</div>
+    <div class="script">one last thing...</div>
+    <h1>Can we be best friends again?</h1>
+    <p>I miss <b>us</b>. The laughs, the chaos, even the silly arguments we'd always patch up. No pressure — just an honest ask from someone who messed up and knows it.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="forgive()">Yes, always 🌟</button>
+      <button id="noBtn2" class="btn btn-no" onclick="showTryAgain()">No</button>
+    </div>
+    <div class="sig">— your idiot friend</div>
+  </div>
+</div>
+
+<!-- STAGE 5: Final celebration -->
+<div id="stage5" class="screen hidden">
+  <div class="card final-card" data-tilt>
+    <div class="final-emoji">🥹</div>
+    <h1>Thank you, Priya.</h1>
+    <p>You have no idea what this means to me. Opening WhatsApp now — let's pick up right where we left off.</p>
+    <div class="sig">forever grateful, forever your friend ✨</div>
+  </div>
+</div>
+
+<!-- Hello Kitty try-again popup -->
+<div id="popup" class="popup-overlay" onclick="closePopup()">
+  <div class="popup-card" onclick="event.stopPropagation()">
+    <div class="popup-bow">🎀</div>
+    <div id="popupText" class="popup-text"></div>
+    <button class="popup-btn" onclick="closePopup()">Okay 🎀</button>
+  </div>
+</div>
+
+<!-- Three.js for 3D floating hearts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+  /* ======= 3D background: floating hearts ======= */
+  (function init3D() {
+    const canvas = document.getElementById('bg3d');
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.z = 12;
+
+    // 5-pointed star via THREE.Shape
+    function makeStarGeometry() {
+      const shape = new THREE.Shape();
+      const outer = 1.0, inner = 0.45, points = 5;
+      for (let i = 0; i < points * 2; i++) {
+        const r = i % 2 === 0 ? outer : inner;
+        const a = (i / (points * 2)) * Math.PI * 2 - Math.PI / 2;
+        const x = Math.cos(a) * r, y = Math.sin(a) * r;
+        if (i === 0) shape.moveTo(x, y);
+        else shape.lineTo(x, y);
+      }
+      shape.closePath();
+      const geo = new THREE.ExtrudeGeometry(shape, {
+        depth: .25, bevelEnabled: true, bevelSize: .07,
+        bevelThickness: .08, bevelSegments: 3, curveSegments: 6
+      });
+      geo.center();
+      geo.scale(.55, .55, .55);
+      return geo;
+    }
+
+    const starGeo = makeStarGeometry();
+    const colors = [0xffd6a5, 0xfff1e6, 0xc8a8e9, 0xffb46b, 0xb8e0d2];
+    const stars = [];
+
+    for (let i = 0; i < 24; i++) {
+      const mat = new THREE.MeshStandardMaterial({
+        color: colors[i % colors.length],
+        roughness: .3,
+        metalness: .6,
+        emissive: colors[i % colors.length],
+        emissiveIntensity: .18,
+      });
+      const m = new THREE.Mesh(starGeo, mat);
+      m.position.set(
+        (Math.random() - .5) * 22,
+        (Math.random() - .5) * 14,
+        (Math.random() - .5) * 14 - 2
+      );
+      m.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+      m.userData = {
+        spin: (Math.random() - .5) * .015,
+        bob: Math.random() * Math.PI * 2,
+        speed: .3 + Math.random() * .6,
+      };
+      const s = .65 + Math.random() * 1.1;
+      m.scale.set(s, s, s);
+      scene.add(m);
+      stars.push(m);
+    }
+
+    // sparkle particles
+    const pGeo = new THREE.BufferGeometry();
+    const pCount = 220;
+    const pos = new Float32Array(pCount * 3);
+    for (let i = 0; i < pCount; i++) {
+      pos[i*3]   = (Math.random() - .5) * 30;
+      pos[i*3+1] = (Math.random() - .5) * 18;
+      pos[i*3+2] = (Math.random() - .5) * 16 - 2;
+    }
+    pGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const pMat = new THREE.PointsMaterial({ color: 0xffd6a5, size: .05, transparent: true, opacity: .85 });
+    const points = new THREE.Points(pGeo, pMat);
+    scene.add(points);
+
+    // lights
+    scene.add(new THREE.AmbientLight(0xfff1e6, .7));
+    const d1 = new THREE.DirectionalLight(0xffd6a5, 1.2); d1.position.set(5, 6, 8); scene.add(d1);
+    const d2 = new THREE.DirectionalLight(0xc8a8e9, .8); d2.position.set(-6, -4, 6); scene.add(d2);
+    const d3 = new THREE.PointLight(0xfff1e6, .9, 30); d3.position.set(0, 0, 6); scene.add(d3);
+
+    // mouse parallax
+    let mx = 0, my = 0, tx = 0, ty = 0;
+    window.addEventListener('mousemove', (e) => {
+      tx = (e.clientX / window.innerWidth - .5) * 2;
+      ty = (e.clientY / window.innerHeight - .5) * 2;
+    });
+
+    let t = 0;
+    function animate() {
+      requestAnimationFrame(animate);
+      t += .01;
+      mx += (tx - mx) * .04;
+      my += (ty - my) * .04;
+      camera.position.x = mx * 1.2;
+      camera.position.y = -my * 1.0;
+      camera.lookAt(0, 0, 0);
+      stars.forEach((h) => {
+        h.rotation.z += h.userData.spin;
+        h.rotation.y += h.userData.spin * .8;
+        h.position.y += Math.sin(t * h.userData.speed + h.userData.bob) * .005;
+      });
+      points.rotation.y += .0005;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  })();
+
+  /* ======= Card 3D tilt ======= */
+  document.querySelectorAll('[data-tilt]').forEach(el => {
+    el.addEventListener('mousemove', (e) => {
+      const r = el.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width - .5;
+      const py = (e.clientY - r.top) / r.height - .5;
+      el.style.transform = `perspective(1000px) rotateY(${px * 8}deg) rotateX(${-py * 8}deg) translateZ(0)`;
+    });
+    el.addEventListener('mouseleave', () => {
+      el.style.transform = 'perspective(1000px) rotateY(0) rotateX(0)';
+    });
+  });
+
+  /* ======= Stage navigation ======= */
+  function goNext(from, to) {
+    document.getElementById(`stage${from}`).classList.add('hidden');
+    document.getElementById(`stage${to}`).classList.remove('hidden');
+    if (to === 5) launchConfetti();
+  }
+
+  /* ======= Letter typing ======= */
+  const letter = `Hey Priya,
+
+I've been carrying this for a while. For 7 months you were the best part of my days — my person, the one I trusted with every secret, the one I could fight with and still call a best friend an hour later.
+
+And I went and made it weird by asking you out. I shouldn't have. Not because of you — because I let a feeling cloud something rare. I crossed a line that I should've protected, and I'm sorry for the silence and the awkwardness that followed.
+
+I know you have no reason to trust me again, and I won't pretend a few "sorry"s can undo months of awkwardness. But if you give me one more chance, I promise to be the friend you deserve — no lines crossed, no weirdness, just Priya and her idiot best friend like before.
+
+I don't want anything except the friend I lost. The dumb arguments we always made up from, the secrets we kept for each other, the bad jokes, the "you won't believe what happened today" — that's what I miss. That's what's irreplaceable.
+
+We've fought before and come back stronger every time. If you can find it in you, can we please do that one more time?`;
+
+  function typeLetter() {
+    const btn = document.getElementById('readBtn');
+    btn.style.display = 'none';
+    const target = document.getElementById('letter');
+    let i = 0;
+    const speed = 28;
+    (function step() {
+      if (i < letter.length) {
+        target.textContent += letter.charAt(i);
+        i++;
+        setTimeout(step, speed);
+      } else {
+        target.classList.add('done');
+        document.getElementById('afterLetter').style.display = 'block';
+      }
+    })();
+  }
+
+  /* ======= Hello Kitty "try again" popup ======= */
+  const tryAgainMessages = [
+    "Ayyy please try again 🎀",
+    "Pretty pretty please? 🌸🐱",
+    "Don't be like that 🥺🎀",
+    "C'mon, give it another shot 😸🍓",
+    "One more try? 🌸✨",
+    "I'm beggingggg 😿🎀",
+    "You meant the OTHER button 😺🎀",
+    "Be nice noooo 🥹🐱🌸",
+    "Are you sure sure? 🎀🧁",
+    "Click the pretty pink one 🎀✨",
+    "Nooooo come back 😿🌸",
+    "Pwetty pwease? 😻🎀🍓",
+    "Wrong button, sweetie 🌸🎀",
+    "One more chance? 🥹🐱✨",
+    "Try again, just for me 🎀💫"
+  ];
+  let msgIndex = 0;
+  function showTryAgain() {
+    const popup = document.getElementById('popup');
+    const text  = document.getElementById('popupText');
+    text.textContent = tryAgainMessages[msgIndex % tryAgainMessages.length];
+    msgIndex++;
+    popup.classList.add('show');
+  }
+  function closePopup() {
+    document.getElementById('popup').classList.remove('show');
+  }
+
+  /* ======= Forgive → confetti + WhatsApp ======= */
+  function forgive() {
+    launchConfetti();
+    goNext(4, 5);
+    setTimeout(() => {
+      const phone = "917305941972";
+      const text  = "Hey, I forgive you. So... can we be best friends again? ✨";
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+    }, 1800);
+  }
+
+  function launchConfetti() {
+    const colors = ['#ffd6a5', '#fff1e6', '#c8a8e9', '#ffb46b', '#b8e0d2', '#f5d6ff'];
+    const shapes = ['✨','🌟','⭐','💫','🌸','🌷'];
+    for (let i = 0; i < 90; i++) {
+      const c = document.createElement('div');
+      const useEmoji = Math.random() < .35;
+      c.className = 'confetti';
+      c.style.left = Math.random() * 100 + 'vw';
+      c.style.animationDuration = 2.5 + Math.random() * 2.5 + 's';
+      c.style.animationDelay = Math.random() * .6 + 's';
+      if (useEmoji) {
+        c.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+        c.style.fontSize = (14 + Math.random() * 16) + 'px';
+        c.style.background = 'transparent';
+        c.style.width = 'auto'; c.style.height = 'auto';
+      } else {
+        c.style.background = colors[Math.floor(Math.random() * colors.length)];
+        c.style.transform = `rotate(${Math.random()*360}deg)`;
+        c.style.borderRadius = Math.random() < .5 ? '2px' : '50%';
+      }
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 5500);
+    }
+  }
+</script>
+</body>
+</html>
