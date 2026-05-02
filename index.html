@@ -825,13 +825,122 @@
   /* Scrollbar hide */
   ::-webkit-scrollbar { width: 0; height: 0; }
 
-  @media (max-width: 600px) {
-    .card { padding: 2rem 1.4rem; }
-    .polaroid { width: 150px; }
-    .polaroid .pic { font-size: 40px; }
-    .pw-cell { width: 44px; height: 54px; font-size: 1.4rem; }
-    .stamp.tl, .stamp.tr { font-size: .6rem; }
-    .ticker { top: 56px; }
+  /* ============ MOBILE TUNING ============ */
+
+  /* hide top corner stamps on small screens to free header space */
+  @media (max-width: 900px) {
+    .stamp.tl, .stamp.tr { display: none; }
+    .stamp { font-size: .58rem; letter-spacing: .18em; }
+    .stamp.bl { bottom: 14px; left: 14px; }
+    .stamp.br { bottom: 14px; right: 14px; }
+  }
+
+  @media (max-width: 700px) {
+    body { overscroll-behavior: none; }
+    .screen { padding: 70px 14px 30px; align-items: flex-start; }
+
+    .card { padding: 1.9rem 1.4rem; border-radius: 22px; max-width: 100%; }
+    .icon-3d { width: 78px; height: 78px; margin-bottom: 1rem; }
+
+    h1 { font-size: clamp(1.5rem, 6.5vw, 1.95rem); letter-spacing: .2px; }
+    .script { font-size: 1.2rem; }
+    p { font-size: .94rem; line-height: 1.62; margin-bottom: 1.3rem; }
+
+    .ticker { padding: 6px 10px; gap: 6px; top: 14px; }
+    .ticker .seg { width: 18px; height: 3px; }
+    .ticker .seg.active { width: 34px; }
+
+    /* PIN */
+    .pw-wrap { max-width: 280px; margin: 1rem auto 1.2rem; }
+    .pw-segments { gap: 8px; }
+    .pw-cell { width: 52px; height: 60px; font-size: 1.45rem; border-radius: 12px; }
+    .pw-hint { font-size: 1.05rem; }
+
+    /* Buttons */
+    .btn { padding: 14px 26px; font-size: .95rem; }
+    .btn-row { gap: 12px; }
+
+    /* Marquee */
+    .marquee { padding: 9px 0; margin: .8rem 0; }
+    .marquee-track { font-size: .8rem; gap: 22px; letter-spacing: .18em; }
+    .marquee-track span { gap: 22px; }
+
+    /* Polaroids — 2-up grid */
+    .polaroids { gap: 14px; padding: 20px 6px; }
+    .polaroid { width: 150px; padding: 11px 11px 30px; }
+    .polaroid .pic { font-size: 42px; }
+    .polaroid .cap { font-size: 1.05rem; }
+    .drag-hint { font-size: .62rem; letter-spacing: .24em; margin-top: .4rem; }
+
+    /* Memory titles */
+    .memory-title { font-size: clamp(1.4rem, 5.5vw, 1.8rem); }
+    .memory-sub { font-size: 1.05rem; margin-bottom: 1rem; }
+
+    /* Chapter */
+    .chapter-stack { min-height: 280px; padding: 2rem 1rem 1.4rem; border-radius: 16px; }
+    .chapter-illustration { width: 78px; height: 78px; margin-bottom: .65rem; }
+    .chapter-title { font-size: 1.2rem; margin-bottom: .7rem; }
+    .chapter-body { font-size: 1.22rem; min-height: 100px; line-height: 1.5; }
+    .chapter-counter { font-size: .68rem; letter-spacing: .22em; }
+    .chapter-intro { font-size: 1.18rem; }
+    .nav-arrow { width: 42px; height: 42px; font-size: 1.05rem; }
+    .chapter-nav { gap: .9rem; }
+
+    /* Final */
+    .final-emoji { font-size: 64px; }
+
+    /* Popup */
+    .popup-card { padding: 1.8rem 1.5rem 1.4rem; border-radius: 22px; max-width: 320px; }
+    .popup-bow { font-size: 44px; }
+    .popup-text { font-size: 1.55rem; margin: .2rem 0 1.2rem; }
+
+    /* lighter aurora to ease GPU on phones */
+    .aurora { filter: blur(70px); opacity: .45; }
+    .aurora.a { width: 380px; height: 380px; }
+    .aurora.b { width: 440px; height: 440px; }
+    .aurora.c { width: 300px; height: 300px; }
+    .aurora.d { width: 320px; height: 320px; opacity: .18; }
+
+    /* slightly trimmed card sheen perf */
+    .grain { opacity: .05; }
+  }
+
+  @media (max-width: 420px) {
+    .card { padding: 1.6rem 1.05rem; }
+    .icon-3d { width: 68px; height: 68px; }
+    .stamp.bl, .stamp.br { font-size: .5rem; bottom: 10px; }
+    .stamp.bl { left: 10px; }
+    .stamp.br { right: 10px; }
+
+    h1 { font-size: clamp(1.35rem, 7vw, 1.75rem); }
+    .script { font-size: 1.1rem; }
+
+    .pw-cell { width: 46px; height: 56px; font-size: 1.3rem; }
+    .pw-segments { gap: 6px; }
+    .pw-hint { font-size: 1rem; }
+
+    .polaroid { width: 138px; padding: 10px 10px 28px; }
+    .polaroid .pic { font-size: 38px; }
+    .polaroid .cap { font-size: 1rem; }
+
+    .marquee-track { font-size: .7rem; gap: 18px; letter-spacing: .14em; }
+    .marquee-track span { gap: 18px; }
+
+    .chapter-stack { min-height: 250px; padding: 1.7rem .85rem 1.3rem; }
+    .chapter-body { font-size: 1.15rem; min-height: 90px; }
+    .chapter-illustration { width: 70px; height: 70px; }
+    .chapter-title { font-size: 1.12rem; }
+
+    .btn { padding: 13px 22px; font-size: .9rem; }
+    .btn-row { gap: 10px; }
+
+    .final-emoji { font-size: 56px; }
+    .popup-text { font-size: 1.4rem; }
+  }
+
+  /* iOS dvh fix so address bar doesn't crop content */
+  @supports (height: 100dvh) {
+    .screen { min-height: 100dvh; }
   }
 </style>
 </head>
@@ -1008,8 +1117,10 @@
 <!-- Three.js for 3D paper planes -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-  /* ======= Touch detection ======= */
+  /* ======= Touch + viewport detection ======= */
   const isTouch = window.matchMedia('(hover: none)').matches || 'ontouchstart' in window;
+  const isMobile = window.innerWidth <= 700;
+  const isSmall  = window.innerWidth <= 420;
   if (isTouch) document.body.classList.add('touch');
 
   /* ======= Custom cursor + spotlight ======= */
@@ -1047,7 +1158,7 @@
     const cv = document.getElementById('constellation');
     const ctx = cv.getContext('2d');
     let W, H, pts = [];
-    const COUNT = 60;
+    const COUNT = isSmall ? 22 : (isMobile ? 32 : 60);
     function resize() {
       W = cv.width  = window.innerWidth  * devicePixelRatio;
       H = cv.height = window.innerHeight * devicePixelRatio;
@@ -1148,7 +1259,8 @@
     const colors = [0xfff5e0, 0xffd6a5, 0xfff1e6, 0xffb46b, 0xb8e0d2, 0xf5e6ff, 0x7ad3ff];
     const stars = [];
 
-    for (let i = 0; i < 22; i++) {
+    const planeCount = isSmall ? 10 : (isMobile ? 14 : 22);
+    for (let i = 0; i < planeCount; i++) {
       const mat = new THREE.MeshStandardMaterial({
         color: colors[i % colors.length],
         roughness: .85, metalness: .05,
@@ -1171,7 +1283,7 @@
     }
 
     const pGeo = new THREE.BufferGeometry();
-    const pCount = 220;
+    const pCount = isMobile ? 120 : 220;
     const pos = new Float32Array(pCount * 3);
     for (let i = 0; i < pCount; i++) {
       pos[i*3]   = (Math.random() - .5) * 30;
@@ -1654,7 +1766,8 @@
   function launchConfetti() {
     const colors = ['#ffd6a5', '#fff1e6', '#c8a8e9', '#ffb46b', '#b8e0d2', '#f5d6ff', '#7ad3ff'];
     const shapes = ['✨','🌟','⭐','💫','🌸','🌷'];
-    for (let i = 0; i < 110; i++) {
+    const confettiCount = isMobile ? 60 : 110;
+    for (let i = 0; i < confettiCount; i++) {
       const c = document.createElement('div');
       const useEmoji = Math.random() < .35;
       c.className = 'confetti';
@@ -1677,7 +1790,8 @@
   }
 
   function rainPetals(words) {
-    for (let i = 0; i < 28; i++) {
+    const petalCount = isMobile ? 16 : 28;
+    for (let i = 0; i < petalCount; i++) {
       const p = document.createElement('div');
       p.className = 'petal';
       p.textContent = words[i % words.length];
