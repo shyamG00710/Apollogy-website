@@ -942,6 +942,58 @@
   @supports (height: 100dvh) {
     .screen { min-height: 100dvh; }
   }
+
+  /* Sound toggle */
+  .sfx-toggle {
+    position: fixed; bottom: 18px; right: 18px;
+    z-index: 9100;
+    width: 46px; height: 46px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: var(--glass-strong);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    color: var(--cream);
+    cursor: none;
+    font-size: 18px;
+    user-select: none;
+    transition: transform .25s ease, background .25s ease, color .25s ease;
+    box-shadow: 0 8px 22px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.18);
+  }
+  body.touch .sfx-toggle { cursor: pointer; bottom: 12px; right: 12px; }
+  .sfx-toggle:hover { transform: translateY(-2px) scale(1.06); background: rgba(255,214,165,.18); color: var(--gold); }
+  .sfx-toggle.muted { opacity: .55; color: var(--lav); }
+  .sfx-toggle .ring {
+    position: absolute; inset: -6px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,214,165,.45);
+    animation: sfxPulse 2.4s ease-out infinite;
+    pointer-events: none;
+  }
+  .sfx-toggle.muted .ring { display: none; }
+  @keyframes sfxPulse {
+    0%   { transform: scale(.85); opacity: .9; }
+    100% { transform: scale(1.55); opacity: 0; }
+  }
+  .sfx-toggle .bars {
+    display: inline-flex; gap: 2px; align-items: end;
+    height: 16px;
+  }
+  .sfx-toggle .bars i {
+    display: block; width: 3px; background: currentColor;
+    border-radius: 2px;
+    animation: sfxEq 1s ease-in-out infinite;
+  }
+  .sfx-toggle .bars i:nth-child(1) { height: 40%; animation-delay: 0s; }
+  .sfx-toggle .bars i:nth-child(2) { height: 90%; animation-delay: .15s; }
+  .sfx-toggle .bars i:nth-child(3) { height: 60%; animation-delay: .3s; }
+  .sfx-toggle .bars i:nth-child(4) { height: 80%; animation-delay: .45s; }
+  .sfx-toggle.muted .bars i { animation: none; height: 30% !important; }
+  @keyframes sfxEq {
+    0%, 100% { transform: scaleY(.55); }
+    50%      { transform: scaleY(1);   }
+  }
 </style>
 </head>
 <body>
@@ -958,6 +1010,12 @@
 <!-- Custom cursor -->
 <div class="cursor-ring"></div>
 <div class="cursor-dot"></div>
+
+<!-- Sound toggle -->
+<button class="sfx-toggle" id="sfxToggle" aria-label="Toggle sound" title="Toggle sound">
+  <span class="ring"></span>
+  <span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+</button>
 
 <!-- Stamps -->
 <div class="stamp tl">vol.07 <span class="dot"></span> a letter</div>
@@ -1122,6 +1180,270 @@
   const isMobile = window.innerWidth <= 700;
   const isSmall  = window.innerWidth <= 420;
   if (isTouch) document.body.classList.add('touch');
+
+  /* ======= Web Audio sound engine (all synthesized, zero external files) ======= */
+  const SFX = (() => {
+    let ctx = null, master = null, wetBus = null, muted = false;
+    let stagePadVoices = null, currentStagePad = -1;
+    let heartbeatTimer = null;
+
+    function ensure() {
+      if (!ctx) {
+        try {
+          ctx = new (window.AudioContext || window.webkitAudioContext)();
+          master = ctx.createGain();
+          master.gain.value = muted ? 0 : 0.32;
+          // tiny feedback delay = magical room reverb-ish
+          const delay = ctx.createDelay(1.5);
+          delay.delayTime.value = 0.19;
+          const fb = ctx.createGain(); fb.gain.value = 0.24;
+          wetBus = ctx.createGain(); wetBus.gain.value = 0.16;
+          delay.connect(fb); fb.connect(delay);
+          master.connect(delay); delay.connect(wetBus); wetBus.connect(ctx.destination);
+          master.connect(ctx.destination);
+        } catch (e) { return null; }
+      }
+      if (ctx.state === 'suspended') ctx.resume();
+      return ctx;
+    }
+
+    function envGain(peak, attack, decay, release) {
+      const t = ctx.currentTime;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.0001), t + Math.max(attack, 0.001));
+      g.gain.exponentialRampToValueAtTime(Math.max(peak * 0.4, 0.0001), t + attack + decay);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay + release);
+      return { node: g, end: t + attack + decay + release };
+    }
+
+    function tone(opts = {}) {
+      if (!ensure()) return;
+      const { freq=440, type='sine', dur=0.18, peak=0.22, attack=0.005, release=0.12, sweep=null, detune=0, delay=0 } = opts;
+      const osc = ctx.createOscillator();
+      osc.type = type; osc.frequency.value = freq; osc.detune.value = detune;
+      if (sweep != null) {
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + delay);
+        osc.frequency.exponentialRampToValueAtTime(Math.max(freq + sweep, 30), ctx.currentTime + delay + dur);
+      }
+      const env = envGain(peak, attack, dur, release);
+      osc.connect(env.node); env.node.connect(master);
+      osc.start(ctx.currentTime + delay);
+      osc.stop(env.end + 0.05);
+    }
+
+    function noiseBurst(opts = {}) {
+      if (!ensure()) return;
+      const { dur=0.18, peak=0.2, freq=2000, type='lowpass', q=1, attack=0.002, release=0.08, delay=0 } = opts;
+      const total = dur + release;
+      const buffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * total)), ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+      const filt = ctx.createBiquadFilter();
+      filt.type = type; filt.frequency.value = freq; filt.Q.value = q;
+      const env = envGain(peak, attack, dur, release);
+      src.connect(filt); filt.connect(env.node); env.node.connect(master);
+      src.start(ctx.currentTime + delay);
+      src.stop(env.end + 0.05);
+    }
+
+    /* Each stage has its own ambient drone — colour shifts with the emotional arc */
+    const stagePadDefs = {
+      1: [110.00, 164.81, 220.00],   // mysterious gate
+      2: [130.81, 196.00, 261.63],   // warm memories
+      3: [123.47, 185.00, 246.94],   // pensive letter
+      4: [146.83, 220.00, 293.66],   // hopeful ask
+      5: [164.81, 246.94, 329.63]    // bright resolution
+    };
+    function setStagePad(n) {
+      if (!ensure()) return;
+      if (currentStagePad === n) return;
+      currentStagePad = n;
+      if (stagePadVoices) {
+        const t = ctx.currentTime;
+        stagePadVoices.forEach(v => {
+          try {
+            v.gain.gain.cancelScheduledValues(t);
+            v.gain.gain.setValueAtTime(v.gain.gain.value, t);
+            v.gain.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
+            v.osc.stop(t + 1.8); v.lfo.stop(t + 1.8);
+          } catch (e) {}
+        });
+      }
+      stagePadVoices = [];
+      const freqs = stagePadDefs[n] || stagePadDefs[1];
+      freqs.forEach((f, i) => {
+        const osc = ctx.createOscillator();
+        const lfo = ctx.createOscillator();
+        const lfoGain = ctx.createGain();
+        const g = ctx.createGain();
+        osc.type = i === 0 ? 'triangle' : 'sine';
+        osc.frequency.value = f;
+        osc.detune.value = (i - 1) * 5;
+        lfo.frequency.value = 0.1 + i * 0.04;
+        lfoGain.gain.value = 1.8;
+        lfo.connect(lfoGain); lfoGain.connect(osc.detune);
+        g.gain.setValueAtTime(0.0001, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.018, ctx.currentTime + 2.6);
+        osc.connect(g); g.connect(master);
+        osc.start(); lfo.start();
+        stagePadVoices.push({ osc, lfo, gain: g });
+      });
+    }
+
+    /* sound primitives */
+    function keyPress(n=0) {
+      const scale = [523.25, 587.33, 659.25, 783.99]; // C5 D5 E5 G5 — typing the password is a melody
+      tone({ freq: scale[n%4], type: 'triangle', dur: 0.07, peak: 0.18, attack: 0.001, release: 0.06, sweep: 60 });
+      noiseBurst({ dur: 0.025, peak: 0.05, freq: 7000, type: 'highpass', release: 0.02 });
+    }
+    function wrong() {
+      tone({ freq: 280, type: 'sawtooth', dur: 0.18, peak: 0.16, sweep: -110, release: 0.18 });
+      tone({ freq: 200, type: 'square', dur: 0.22, peak: 0.10, sweep: -70, release: 0.2, detune: -22, delay: 0.06 });
+    }
+    function unlock() {
+      [659.25, 880, 1108.73, 1318.51, 1760].forEach((f, i) => {
+        tone({ freq: f, type: 'sine', dur: 0.32, peak: 0.18, attack: 0.005, release: 0.5, delay: i * 0.06 });
+        tone({ freq: f * 1.5, type: 'triangle', dur: 0.22, peak: 0.05, release: 0.4, delay: i * 0.06 });
+      });
+      noiseBurst({ dur: 0.08, peak: 0.14, freq: 5000, type: 'highpass', release: 0.4, delay: 0.05 });
+    }
+    function curtainSwoosh() {
+      noiseBurst({ dur: 0.55, peak: 0.18, freq: 1200, type: 'lowpass', q: 0.7, attack: 0.04, release: 0.42 });
+      tone({ freq: 360, type: 'sine', dur: 0.4, peak: 0.06, sweep: -200, release: 0.3, attack: 0.05 });
+    }
+    function pickup() {
+      noiseBurst({ dur: 0.1, peak: 0.16, freq: 4500, type: 'bandpass', q: 1.2, attack: 0.001, release: 0.08 });
+      tone({ freq: 720, type: 'triangle', dur: 0.05, peak: 0.07, release: 0.05 });
+    }
+    function throwSound(velocity = 1) {
+      const v = Math.min(Math.max(velocity, 0.4), 2.4);
+      noiseBurst({ dur: 0.32, peak: 0.16 * v, freq: 1400, type: 'lowpass', q: 0.9, attack: 0.003, release: 0.28 });
+      tone({ freq: 240, type: 'sine', dur: 0.18, peak: 0.05 * v, sweep: -120, release: 0.2 });
+    }
+    function land() {
+      tone({ freq: 95, type: 'sine', dur: 0.09, peak: 0.16, release: 0.08 });
+      noiseBurst({ dur: 0.06, peak: 0.05, freq: 2200, type: 'lowpass', q: 1.4, release: 0.04 });
+    }
+    function paperUnfold() {
+      noiseBurst({ dur: 0.6, peak: 0.18, freq: 3500, type: 'bandpass', q: 0.8, attack: 0.02, release: 0.45 });
+      noiseBurst({ dur: 0.32, peak: 0.12, freq: 2400, type: 'bandpass', q: 1, release: 0.28, delay: 0.18 });
+    }
+    function typewriterTick(i) {
+      if (typeof i === 'number' && i % 4 !== 0) return; // every 4th char
+      const f = 1500 + Math.random() * 800;
+      tone({ freq: f, type: 'square', dur: 0.012, peak: 0.04, release: 0.012 });
+      noiseBurst({ dur: 0.01, peak: 0.03, freq: 7000, type: 'highpass', release: 0.008 });
+    }
+    function pageFlip() {
+      noiseBurst({ dur: 0.32, peak: 0.18, freq: 2200, type: 'bandpass', q: 0.8, attack: 0.005, release: 0.26 });
+      tone({ freq: 540, type: 'triangle', dur: 0.15, peak: 0.06, sweep: -150, release: 0.12, delay: 0.04 });
+    }
+    function dotPick() {
+      tone({ freq: 988, type: 'triangle', dur: 0.07, peak: 0.1, release: 0.06 });
+    }
+    function hoverPing() {
+      tone({ freq: 1320, type: 'sine', dur: 0.04, peak: 0.045, release: 0.05 });
+    }
+    function popupShow() {
+      tone({ freq: 740, type: 'triangle', dur: 0.09, peak: 0.1, sweep: 240, release: 0.08 });
+      tone({ freq: 1100, type: 'sine', dur: 0.07, peak: 0.06, release: 0.06, delay: 0.05 });
+    }
+    function popupHide() {
+      tone({ freq: 660, type: 'triangle', dur: 0.07, peak: 0.08, sweep: -200, release: 0.06 });
+    }
+    function confettiPop() {
+      noiseBurst({ dur: 0.22, peak: 0.24, freq: 1500, type: 'lowpass', q: 1.4, attack: 0.001, release: 0.2 });
+      tone({ freq: 140, type: 'sine', dur: 0.15, peak: 0.13, sweep: -50, release: 0.13 });
+      [1568, 2093, 2637, 3136, 3520].forEach((f, i) => {
+        tone({ freq: f, type: 'sine', dur: 0.4, peak: 0.05, release: 0.45, delay: 0.05 + i * 0.05 });
+      });
+    }
+    function petalChimes() {
+      const notes = [659.25, 783.99, 880, 1046.5, 1174.66, 1318.51, 1567.98, 1760];
+      for (let i = 0; i < 9; i++) {
+        const f = notes[Math.floor(Math.random() * notes.length)];
+        tone({ freq: f, type: 'sine', dur: 0.55, peak: 0.045, attack: 0.005, release: 0.55, delay: i * 0.13 + Math.random() * 0.08 });
+      }
+    }
+    function finalChord() {
+      [523.25, 659.25, 783.99, 987.77, 1318.51].forEach((f, i) => {
+        tone({ freq: f, type: 'sine', dur: 1.6, peak: 0.07, attack: 0.06, release: 1.6, delay: i * 0.04 });
+        tone({ freq: f / 2, type: 'triangle', dur: 1.6, peak: 0.04, attack: 0.06, release: 1.6, delay: i * 0.04 });
+      });
+    }
+    function startHeartbeat() {
+      if (!ensure() || heartbeatTimer) return;
+      const beat = () => {
+        tone({ freq: 64, type: 'sine', dur: 0.12, peak: 0.16, sweep: -22, release: 0.14 });
+        tone({ freq: 56, type: 'sine', dur: 0.12, peak: 0.13, sweep: -22, release: 0.14, delay: 0.18 });
+      };
+      beat();
+      heartbeatTimer = setInterval(beat, 1100);
+    }
+    function stopHeartbeat() {
+      if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
+    }
+
+    function setMuted(v) {
+      muted = v;
+      if (master) {
+        const t = ctx.currentTime;
+        master.gain.cancelScheduledValues(t);
+        master.gain.linearRampToValueAtTime(v ? 0 : 0.32, t + 0.12);
+      }
+    }
+    function isMuted() { return muted; }
+
+    return {
+      ensure, keyPress, wrong, unlock, curtainSwoosh, pickup, throwSound, land,
+      paperUnfold, typewriterTick, pageFlip, dotPick, hoverPing, popupShow, popupHide,
+      confettiPop, petalChimes, finalChord, startHeartbeat, stopHeartbeat,
+      setStagePad, setMuted, isMuted
+    };
+  })();
+
+  /* Mute toggle wiring (persists across reloads) */
+  (function sfxToggleInit() {
+    const btn = document.getElementById('sfxToggle');
+    if (!btn) return;
+    const stored = localStorage.getItem('sfx-muted') === '1';
+    if (stored) { SFX.setMuted(true); btn.classList.add('muted'); }
+    btn.addEventListener('click', () => {
+      const next = !SFX.isMuted();
+      SFX.ensure();
+      SFX.setMuted(next);
+      btn.classList.toggle('muted', next);
+      localStorage.setItem('sfx-muted', next ? '1' : '0');
+      if (!next) SFX.dotPick();
+    });
+  })();
+
+  /* Hover ping on interactive elements */
+  document.addEventListener('mouseover', (e) => {
+    const t = e.target.closest && e.target.closest('.btn, .nav-arrow, .chapter-dot, .popup-btn, .sfx-toggle');
+    if (t && !t._sfxHover) {
+      t._sfxHover = true;
+      SFX.hoverPing();
+      setTimeout(() => { t._sfxHover = false; }, 220);
+    }
+  });
+
+  /* First-gesture bootstrap so the audio context is unlocked early */
+  (function firstGesture() {
+    const wake = () => {
+      SFX.ensure();
+      SFX.setStagePad(1);
+      window.removeEventListener('pointerdown', wake);
+      window.removeEventListener('keydown', wake);
+      window.removeEventListener('touchstart', wake);
+    };
+    window.addEventListener('pointerdown', wake, { once: true });
+    window.addEventListener('keydown', wake, { once: true });
+    window.addEventListener('touchstart', wake, { once: true });
+  })();
 
   /* ======= Custom cursor + spotlight ======= */
   (function cursorInit() {
@@ -1438,6 +1760,7 @@
     if (stamp) stamp.textContent = `stage ${String(stageNum).padStart(2,'0')} / 05`;
   }
   function runCurtain() {
+    SFX.curtainSwoosh();
     const c = document.getElementById('curtain');
     c.classList.remove('run');
     void c.offsetWidth;
@@ -1449,10 +1772,13 @@
       document.getElementById(`stage${from}`).classList.add('hidden');
       document.getElementById(`stage${to}`).classList.remove('hidden');
       updateTicker(to);
+      SFX.setStagePad(to);
+      if (to === 4) SFX.startHeartbeat(); else SFX.stopHeartbeat();
       const newStage = document.getElementById(`stage${to}`);
       const h1 = newStage.querySelector('h1[data-scramble]');
       if (h1) setTimeout(() => scrambleText(h1), 50);
       if (to === 5) {
+        SFX.finalChord();
         launchConfetti();
         rainPetals(['thank you', 'priya', 'forever', 'best friends', 'always', 'us']);
       }
@@ -1472,9 +1798,12 @@
         c.classList.toggle('active', i === v.length && v.length < 4);
       });
     }
+    let prevPwLen = 0;
     input.addEventListener('input', () => {
       input.value = input.value.replace(/\D/g, '').slice(0, 4);
       render();
+      if (input.value.length > prevPwLen) SFX.keyPress(input.value.length - 1);
+      prevPwLen = input.value.length;
       if (input.value.length === 4) setTimeout(checkPassword, 250);
     });
     document.addEventListener('click', (e) => {
@@ -1486,8 +1815,10 @@
   function checkPassword() {
     const input = document.getElementById('pwInput');
     if (input.value.trim() === '2105') {
+      SFX.unlock();
       goNext(1, 2);
     } else {
+      SFX.wrong();
       const segs = document.getElementById('pwSegments');
       segs.classList.remove('shake');
       void segs.offsetWidth;
@@ -1523,6 +1854,7 @@
         scale = 1.08;
         startPx = ev.clientX; startPy = ev.clientY;
         lastX = ev.clientX; lastY = ev.clientY; lastT = performance.now();
+        SFX.pickup();
         e.preventDefault();
       }
       function move(e) {
@@ -1544,6 +1876,8 @@
         card.classList.remove('dragging');
         scale = 1;
         vr = vx * .25;
+        const speed = Math.hypot(vx, vy);
+        if (speed > 4) SFX.throwSound(speed / 8);
         flick();
       }
       function flick() {
@@ -1556,6 +1890,8 @@
         apply();
         if (Math.abs(vx) > .15 || Math.abs(vy) > .15) requestAnimationFrame(flick);
         else {
+          const startSpeed = Math.hypot(vx, vy);
+          if (startSpeed > .1) SFX.land();
           const easeBack = () => {
             x += (0 - x) * .12;
             y += (baseY - y) * .12;
@@ -1639,6 +1975,7 @@
   let typeTimer = null;
 
   function openLetter() {
+    SFX.paperUnfold();
     document.getElementById('chapterIntro').style.display = 'none';
     document.getElementById('chapterUI').style.display = 'block';
     buildChapterDots();
@@ -1653,6 +1990,7 @@
       d.className = 'chapter-dot' + (i === 0 ? ' active' : '');
       d.addEventListener('click', () => {
         if (i === currentChapter) return;
+        SFX.dotPick();
         const dir = i > currentChapter ? 'next' : 'prev';
         renderChapter(i, dir);
       });
@@ -1667,6 +2005,7 @@
     typeTimer = setInterval(() => {
       i++;
       el.innerHTML = text.slice(0, i) + '<span class="caret"></span>';
+      SFX.typewriterTick(i);
       if (i >= text.length) {
         clearInterval(typeTimer);
         typeTimer = null;
@@ -1679,6 +2018,7 @@
     const stack = document.getElementById('chapterStack');
     const old = stack.querySelector('.chapter');
     if (old) {
+      SFX.pageFlip();
       old.classList.add(direction === 'prev' ? 'flip-out-right' : 'flip-out-left');
     }
     setTimeout(() => {
@@ -1747,9 +2087,11 @@
     text.textContent = tryAgainMessages[msgIndex % tryAgainMessages.length];
     msgIndex++;
     popup.classList.add('show');
+    SFX.popupShow();
   }
   function closePopup() {
     document.getElementById('popup').classList.remove('show');
+    SFX.popupHide();
   }
 
   /* ======= Forgive → confetti + WhatsApp ======= */
@@ -1764,6 +2106,7 @@
   }
 
   function launchConfetti() {
+    SFX.confettiPop();
     const colors = ['#ffd6a5', '#fff1e6', '#c8a8e9', '#ffb46b', '#b8e0d2', '#f5d6ff', '#7ad3ff'];
     const shapes = ['✨','🌟','⭐','💫','🌸','🌷'];
     const confettiCount = isMobile ? 60 : 110;
@@ -1790,6 +2133,7 @@
   }
 
   function rainPetals(words) {
+    SFX.petalChimes();
     const petalCount = isMobile ? 16 : 28;
     for (let i = 0; i < petalCount; i++) {
       const p = document.createElement('div');
